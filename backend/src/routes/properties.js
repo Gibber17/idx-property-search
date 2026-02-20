@@ -2,6 +2,78 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db/mysql');
 
+router.get('/:id/openhouses', async (req, res) => { 
+  // This route MUST come first (before /:id) 
+  try { 
+    const { id } = req.params; 
+ 
+    const [propertyCheck] = await pool.query( 
+      'SELECT ListingId FROM rets_property WHERE ListingId = ?', 
+      [id] 
+    ); 
+ 
+    if (propertyCheck.length === 0) { 
+      return res.status(404).json({ 
+        error: 'Property not found', 
+        message: `No property exists with ID: ${id}` 
+      }); 
+    } 
+ 
+    const [openhouses] = await pool.query( 
+      'SELECT * FROM rets_openhouse WHERE ListingId = ? ORDER BY OpenHouseDate, OpenHouseStartTime', 
+      [id] 
+    ); 
+ 
+    res.json({ 
+      propertyId: id, 
+      count: openhouses.length, 
+      openhouses 
+    }); 
+  } catch (error) { 
+    console.error('Database error:', error); 
+    res.status(500).json({ error: 'Failed to fetch open houses' }); 
+  } 
+}); 
+
+function validateListingId(id) { 
+  if (!id || id.trim() === '') { 
+    return { valid: false, error: 'Listing ID is required' }; 
+  } 
+  if (id.length > 50) { 
+    return { valid: false, error: 'Listing ID is too long' }; 
+  } 
+    return { valid: true }; 
+} 
+
+router.get('/:id', async (req, res) => { 
+  try { 
+    const { id } = req.params; 
+ 
+    const [results] = await pool.query( 
+      'SELECT * FROM rets_property WHERE ListingId = ?', 
+      [id] 
+    );
+    
+    const validation = validateListingId(id);
+ 
+    if (!validation.valid) { 
+      return res.status(400).json({ error: validation.error }); 
+    } 
+
+    if (results.length === 0) { 
+      return res.status(404).json({ 
+        error: 'Property not found', 
+        message: `No property exists with ID: ${id}` 
+      }); 
+    } 
+ 
+    res.json(results[0]); 
+  } catch (error) { 
+    console.error('Database error:', error); 
+    res.status(500).json({ error: 'Failed to fetch property details' }); 
+  } 
+}); 
+
 router.get('/', async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 20;
