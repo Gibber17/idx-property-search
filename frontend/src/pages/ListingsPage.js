@@ -3,6 +3,7 @@ import { fetchProperties } from '../api/client';
 import PropertyFilters from '../components/PropertyFilters';
 import './ListingsPage.css';
 import Pagination from '../components/Pagination';
+import { useNavigate } from 'react-router-dom';
 
 function ListingsPage() {
   const [properties, setProperties] = useState([]);
@@ -89,7 +90,14 @@ function ListingsPage() {
 }
 
 function PropertyCard({ property }) {
+  const navigate = useNavigate(); 
+
+  const handleClick = () => { 
+  navigate(`/property/${property.ListingId}`); 
+  };
+
   return (
+    <div className="property-card" onClick={handleClick}>
       <div className="property-card">
         <div className="property-image">
           {property.L_Photos ? (
@@ -117,6 +125,7 @@ function PropertyCard({ property }) {
           </div>
         </div>
       </div>
+    </div>
   );
 }
 
