@@ -14,7 +14,7 @@ describe('fetchProperties', () => {
             offset: 0,
             results: [
                 {
-                    ListingId: '123',
+                    L_ListingID: '123',
                     L_Address: '123 Main St',
                     L_City: 'Los Angeles',
                     L_State: 'CA',

@@ -94,7 +94,7 @@ function ListingsPage() {
                   <>
                     <div className="property-grid">
                       {properties.map(property => (
-                          <PropertyCard key={property.ListingId} property={property} />
+                          <PropertyCard key={property.L_ListingID} property={property} />
                       ))}
                     </div>
 
@@ -116,7 +116,8 @@ function PropertyCard({ property }) {
   const navigate = useNavigate(); 
 
   const handleClick = () => { 
-    navigate(`/property/${property.ListingId}`); 
+    navigate(`/property/${property.L_ListingID}`); 
+    console.log(property);
   };
 
   let photos = [];

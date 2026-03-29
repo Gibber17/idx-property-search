@@ -144,6 +144,8 @@ router.get('/', async (req, res) => {
     let orderClause = ''; 
     const validSortFields = ['ListPrice', 'ListingContractDate', 'LivingArea', 'BedroomsTotal']; 
     const validOrders = ['ASC', 'DESC']; 
+    const sortBy = req.query.sortBy || 'ListingContractDate';
+    const sortOrder = req.query.sortOrder || 'ASC';
  
     if (sortBy && validSortFields.includes(sortBy)) { 
       const order = validOrders.includes(sortOrder?.toUpperCase())  
@@ -152,7 +154,8 @@ router.get('/', async (req, res) => {
       orderClause = `ORDER BY ${sortBy} ${order}`; 
     } 
     
-    const dataQuery = `SELECT * FROM rets_property ${whereClause} LIMIT ? OFFSET ?`;
+    const dataQuery = `SELECT * FROM rets_property ${whereClause} ${orderClause} LIMIT ? OFFSET ?`;
+
     const [results] = await pool.query(dataQuery, [...values, limit, offset]);
 
     res.json({ total, limit, offset, results });
