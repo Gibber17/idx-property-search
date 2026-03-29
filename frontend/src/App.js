@@ -3,9 +3,11 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import ListingsPage from './pages/ListingsPage'; 
 import PropertyDetailPage from './pages/PropertyDetailPage'; 
 import './App.css'; 
+import { ErrorBoundary } from 'next/dist/client/components/error-boundary';
 
 function App() { 
   return ( 
+    <ErrorBoundary>
     <BrowserRouter> 
       <div className="App"> 
       <Routes> 
@@ -13,7 +15,8 @@ function App() {
         <Route path="/property/:id" element={<PropertyDetailPage />} /> 
       </Routes> 
       </div> 
-    </BrowserRouter> 
+    </BrowserRouter>
+    </ErrorBoundary> 
   ); 
 } 
 export default App; 

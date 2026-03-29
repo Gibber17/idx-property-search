@@ -13,6 +13,8 @@ function ListingsPage() {
   const [filters, setFilters] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(20);
+  const [sortBy, setSortBy] = useState(''); 
+  const [sortOrder, setSortOrder] = useState('ASC'); 
 
   useEffect(() => {
     loadProperties();
@@ -46,11 +48,31 @@ function ListingsPage() {
 
   const totalPages = Math.ceil(total / itemsPerPage);
 
+  // Add sort controls in render:
   return (
       <div className="listings-page">
         <h1>Property Listings</h1>
 
         <PropertyFilters onSearch={handleSearch} />
+
+        {/*Sort controls*/}
+        <div className="sort-controls"> 
+          <label>Sort by:</label> 
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}> 
+            <option value="">Default</option> 
+            <option value="ListPrice">Price</option> 
+            <option value="ListingContractDate">Date Listed</option> 
+            <option value="LivingArea">Size</option> 
+            <option value="BedroomsTotal">Bedrooms</option> 
+          </select> 
+          
+          {sortBy && ( 
+            <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}> 
+              <option value="ASC">Low to High</option> 
+              <option value="DESC">High to Low</option> 
+            </select> 
+          )} 
+      </div>
 
         {!loading && !error && (
             <p className="results-summary">
@@ -89,40 +111,55 @@ function ListingsPage() {
   );
 }
 
-function PropertyCard({ property }) {
+// handles images and functionality of property card
+function PropertyCard({ property }) { 
   const navigate = useNavigate(); 
 
   const handleClick = () => { 
-  navigate(`/property/${property.ListingId}`); 
+    navigate(`/property/${property.ListingId}`); 
   };
+
+  let photos = [];
+
+  try {
+    if (typeof property.L_Photos === "string") {
+      photos = JSON.parse(property.L_Photos);
+    } else if (Array.isArray(property.L_Photos)) {
+      photos = property.L_Photos;
+    }
+  } catch (e) {
+    photos = [];
+  }
+
+  const firstPhoto = photos[0];
 
   return (
     <div className="property-card" onClick={handleClick}>
-      <div className="property-card">
-        <div className="property-image">
-          {property.L_Photos ? (
-              <img src={property.L_Photos} alt={property.L_Address} />
-          ) : (
-              <div className="no-image">No image available</div>
-          )}
+      <div className="property-image">
+        {firstPhoto ? (
+          <img src={firstPhoto} alt={property.L_Address} />
+        ) : (
+          <div className="no-image">No image available</div>
+        )}
+      </div>
+
+      <div className="property-info">
+        <div className="price">${property.L_SystemPrice?.toLocaleString()}</div>
+        <div className="address">{property.L_Address}</div>
+        <div className="city">
+          {property.L_City}, {property.L_State} {property.L_Zip}
         </div>
 
-        <div className="property-info">
-          <div className="price">${property.L_SystemPrice?.toLocaleString()}</div>
-          <div className="address">{property.L_Address}</div>
-          <div className="city">{property.L_City}, {property.L_State} {property.L_Zip}</div>
-
-          <div className="property-details">
-            <span>{property.L_Keyword2} beds</span>
-            <span>•</span>
-            <span>{property.LM_Dec_3} baths</span>
-            {property.LM_Int2_3 && (
-                <>
-                  <span>•</span>
-                  <span>{property.LM_Int2_3.toLocaleString()} sqft</span>
-                </>
-            )}
-          </div>
+        <div className="property-details">
+          <span>{property.L_Keyword2} beds</span>
+          <span>•</span>
+          <span>{property.LM_Dec_3} baths</span>
+          {property.LM_Int2_3 && (
+            <>
+              <span>•</span>
+              <span>{property.LM_Int2_3.toLocaleString()} sqft</span>
+            </>
+          )}
         </div>
       </div>
     </div>
