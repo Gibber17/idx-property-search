@@ -1,5 +1,5 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import PropTypes from 'prop-types';
 
 // handles images and functionality of property card
 
@@ -8,7 +8,6 @@ function PropertyCard({ property }) {
 
   const handleClick = () => {
     navigate(`/property/${property.L_ListingID}`);
-    console.log(property);
   };
 
   let photos = [];
@@ -62,5 +61,23 @@ function PropertyCard({ property }) {
     </div>
   );
 }
+
+PropertyCard.propTypes = {
+  property: PropTypes.shape({
+    L_ListingID: PropTypes.string.isRequired,
+    L_SystemPrice: PropTypes.number,
+    L_Address: PropTypes.string,
+    L_City: PropTypes.string,
+    L_State: PropTypes.string,
+    L_Zip: PropTypes.string,
+    L_Keyword2: PropTypes.number,
+    LM_Dec_3: PropTypes.number,
+    LM_Int2_3: PropTypes.number,
+    L_Photos: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.array
+    ])
+  }).isRequired
+};
 
 export default PropertyCard;

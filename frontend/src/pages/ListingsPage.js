@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { fetchProperties } from '../api/client';
 import PropertyFilters from '../components/PropertyFilters';
 import './ListingsPage.css';
