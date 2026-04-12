@@ -21,14 +21,19 @@ function PropertyCard({ property }) {
   } catch (e) {
     photos = [];
   }
-
+  console.log("PHOTOS:", photos);
   const firstPhoto = photos[0];
+
+  const imageUrl =
+  typeof firstPhoto === "string"
+    ? firstPhoto
+    : firstPhoto?.MediaURL || firstPhoto?.uri || firstPhoto?.url;
 
   return (
     <div className="property-card" onClick={handleClick}>
       <div className="property-image">
-        {firstPhoto ? (
-          <img src={firstPhoto} alt={property.L_Address} />
+        {imageUrl ? (
+          <img src={imageUrl} alt={property.L_Address} />
         ) : (
           <div className="no-image">No image available</div>
         )}

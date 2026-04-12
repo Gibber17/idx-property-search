@@ -80,8 +80,23 @@ router.get('/:id', async (req, res) => {
 
 router.get('/', async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 20;
-    const offset = parseInt(req.query.offset) || 0;
+    // do this so we can validate before setting defaults and avoid issues with NaN values
+    const limit = parseInt(req.query.limit);
+    const offset = parseInt(req.query.offset);
+
+    // Validate limit
+    if (req.query.limit !== undefined && isNaN(limit)) {
+      return res.status(400).json({ error: 'Invalid limit parameter' });
+    }
+
+    // Validate offset (optional but good practice)
+    if (req.query.offset !== undefined && isNaN(offset)) {
+      return res.status(400).json({ error: 'Invalid offset parameter' });
+    }
+
+    // Set defaults AFTER validation
+    const finalLimit = limit || 10;
+    const finalOffset = offset || 0;
     const { city, zipcode, minPrice, maxPrice, beds, baths } = req.query;
 
     // Input validation
@@ -97,10 +112,10 @@ router.get('/', async (req, res) => {
     if (baths && isNaN(baths)) {
       return res.status(400).json({ error: 'baths must be a number' });
     }
-    if (limit < 1 || limit > 100) {
+    if (finalLimit < 1 || finalLimit > 100) {
       return res.status(400).json({ error: 'limit must be between 1 and 100' });
     }
-    if (offset < 0) {
+    if (finalOffset < 0) {
       return res.status(400).json({ error: 'offset cannot be negative' });
     }
 
@@ -156,9 +171,9 @@ router.get('/', async (req, res) => {
     
     const dataQuery = `SELECT * FROM rets_property ${whereClause} ${orderClause} LIMIT ? OFFSET ?`;
 
-    const [results] = await pool.query(dataQuery, [...values, limit, offset]);
+    const [results] = await pool.query(dataQuery, [...values, finalLimit, finalOffset]);
 
-    res.json({ total, limit, offset, results });
+    res.json({ total, limit: finalLimit, offset: finalOffset, results });
   } catch (error) {
     console.error('Database error:', error);
     res.status(500).json({ error: 'Failed to fetch properties' });

@@ -3,12 +3,12 @@ import './PropertyFilters.css';
  
 function PropertyFilters({ onSearch }) { 
   const [filters, setFilters] = useState({ 
-    city: '', 
-    zipcode: '', 
-    minPrice: '', 
-    maxPrice: '', 
-    beds: '', 
-    baths: '' 
+    L_City: '',
+    L_Zip: '',
+    minPrice: '',
+    maxPrice: '',
+    L_Keyword2: '',
+    LM_Dec_3: ''
   }); 
  
   const handleChange = (e) => { 
@@ -32,44 +32,49 @@ function PropertyFilters({ onSearch }) {
  
   const handleClear = () => { 
     setFilters({ 
-      city: '', 
-      zipcode: '', 
-      minPrice: '', 
-      maxPrice: '', 
-      beds: '', 
-      baths: '' 
+      L_City: '',
+      L_Zip: '',
+      minPrice: '',
+      maxPrice: '',
+      L_Keyword2: '',
+      LM_Dec_3: ''
     }); 
     onSearch({}); 
   }; 
  
   return ( 
+    // <label> is NOT connected to your <input>
+    // You need to connect labels using htmlFor + id
     <form className="property-filters" onSubmit={handleSubmit}> 
       <div className="filter-row"> 
         <div className="filter-group"> 
-          <label>City</label> 
-          <input 
-            type="text" 
-            name="city" 
-            value={filters.city} 
-            onChange={handleChange} 
-            placeholder="Enter city" 
-          /> 
+          <label htmlFor="filter-city">City</label>
+            <input
+                id="filter-city"
+                type="text"
+                name="L_City"
+                value={filters.L_City}
+                onChange={handleChange}
+                placeholder="e.g. Los Angeles"
+            /> 
         </div> 
  
         <div className="filter-group"> 
-          <label>ZIP Code</label> 
-          <input 
-            type="text" 
-            name="zipcode" 
-            value={filters.zipcode} 
-            onChange={handleChange} 
-            placeholder="Enter ZIP" 
-          /> 
+          <label htmlFor="filter-zip">ZIP Code</label>
+            <input
+                id="filter-zip"
+                type="text"
+                name="L_Zip"
+                value={filters.L_Zip}
+                onChange={handleChange}
+                placeholder="e.g. 90210"
+            /> 
         </div> 
  
         <div className="filter-group"> 
-          <label>Min Price</label> 
+          <label htmlFor="filter-min-price">Min Price</label> 
           <input 
+            id="filter-min-price"
             type="number" 
             name="minPrice" 
             value={filters.minPrice} 
@@ -79,37 +84,48 @@ function PropertyFilters({ onSearch }) {
         </div> 
  
         <div className="filter-group"> 
-          <label>Max Price</label> 
-          <input 
-            type="number" 
-            name="maxPrice" 
-            value={filters.maxPrice} 
-            onChange={handleChange} 
-            placeholder="No max" 
-          /> 
+          <label htmlFor="filter-max-price">Max Price</label>
+            <input
+                id="filter-max-price"
+                type="number"
+                name="maxPrice"
+                value={filters.maxPrice}
+                onChange={handleChange}
+                placeholder="No max"
+            /> 
         </div> 
  
         <div className="filter-group"> 
-          <label>Beds</label> 
-          <select name="beds" value={filters.beds} onChange={handleChange}> 
-            <option value="">Any</option> 
-            <option value="1">1+</option> 
-            <option value="2">2+</option> 
-            <option value="3">3+</option> 
-            <option value="4">4+</option> 
-            <option value="5">5+</option> 
-          </select> 
+          <label htmlFor="filter-beds">Beds</label>
+            <select
+                id="filter-beds"
+                name="L_Keyword2"
+                value={filters.L_Keyword2}
+                onChange={handleChange}
+            >
+              <option value="">Any</option>
+              <option value="1">1+</option>
+              <option value="2">2+</option>
+              <option value="3">3+</option>
+              <option value="4">4+</option>
+              <option value="5">5+</option>
+            </select> 
         </div> 
  
         <div className="filter-group"> 
-          <label>Baths</label> 
-          <select name="baths" value={filters.baths} onChange={handleChange}> 
-            <option value="">Any</option> 
-            <option value="1">1+</option> 
-            <option value="2">2+</option> 
-            <option value="3">3+</option> 
-            <option value="4">4+</option> 
-          </select> 
+          <label htmlFor="filter-baths">Baths</label>
+            <select
+                id="filter-baths"
+                name="LM_Dec_3"
+                value={filters.LM_Dec_3}
+                onChange={handleChange}
+            >
+              <option value="">Any</option>
+              <option value="1">1+</option>
+              <option value="2">2+</option>
+              <option value="3">3+</option>
+              <option value="4">4+</option>
+            </select> 
         </div> 
       </div> 
  
