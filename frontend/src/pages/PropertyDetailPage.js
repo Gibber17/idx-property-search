@@ -54,7 +54,7 @@ function PropertyDetailPage() {
   } 
  
   // Handle Photos
-  let coverPhoto = null;
+  /*let coverPhoto = null;
   try {
     if (property.L_Photos) {
       // 1. Parse the string into a real JavaScript array
@@ -69,7 +69,11 @@ function PropertyDetailPage() {
     }
   } catch (e) {
     console.error("Error parsing photos:", e);
-  }
+  }*/
+
+  const photos = property.L_Photos ? (Array.isArray(property.L_Photos) ? property.L_Photos : [property.L_Photos]) : [];
+  const coverPhoto = photos[0] || null;
+
   
   return ( 
     <div className="property-detail-page"> 

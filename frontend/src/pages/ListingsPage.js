@@ -3,7 +3,6 @@ import { fetchProperties } from '../api/client';
 import PropertyFilters from '../components/PropertyFilters';
 import './ListingsPage.css';
 import Pagination from '../components/Pagination';
-import { useNavigate } from 'react-router-dom';
 import PropertyCard from '../components/PropertyCard';
 
 function ListingsPage() {
@@ -28,6 +27,7 @@ function ListingsPage() {
       const offset = (currentPage - 1) * itemsPerPage;
       const params = { ...filters, limit: itemsPerPage, offset };
       const data = await fetchProperties(params);
+      console.log(data.results[0]); // logs the first property
       setProperties(data.results);
       setTotal(data.total);
     } catch (err) {
