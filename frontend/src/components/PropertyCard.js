@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom';
+import { safeParsePhotos } from '../utils/PhotoUtils';
 import PropTypes from 'prop-types';
-
-// handles images and functionality of property card
 
 function PropertyCard({ property }) {
   const navigate = useNavigate();
@@ -9,31 +8,15 @@ function PropertyCard({ property }) {
   const handleClick = () => {
     navigate(`/property/${property.L_ListingID}`);
   };
-
-  let photos = [];
-
-  try {
-    if (typeof property.L_Photos === "string") {
-      photos = JSON.parse(property.L_Photos);
-    } else if (Array.isArray(property.L_Photos)) {
-      photos = property.L_Photos;
-    }
-  } catch (e) {
-    photos = [];
-  }
-  console.log("PHOTOS:", photos);
-  const firstPhoto = photos[0];
-
-  const imageUrl =
-  typeof firstPhoto === "string"
-    ? firstPhoto
-    : firstPhoto?.MediaURL || firstPhoto?.uri || firstPhoto?.url;
+  
+  const photos = safeParsePhotos(property.L_Photos);
+  const coverPhoto = photos[0];
 
   return (
     <div className="property-card" onClick={handleClick}>
       <div className="property-image">
-        {imageUrl ? (
-          <img src={imageUrl} alt={property.L_Address} />
+        {coverPhoto ? (
+          <img src={coverPhoto} alt={property.L_Address} />
         ) : (
           <div className="no-image">No image available</div>
         )}

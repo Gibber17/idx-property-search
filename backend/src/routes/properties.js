@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db/mysql');
 
-// Add ID Validation function
 function validateListingId(id) {
   if (!id || id.trim() === '') {
     return { valid: false, error: 'Listing ID is required' };
@@ -11,6 +10,16 @@ function validateListingId(id) {
     return { valid: false, error: 'Listing ID is too long' };
   }
   return { valid: true };
+}
+
+// Parse a query param as an integer, returning null if absent
+// or NaN if present-but-invalid. This lets the caller distinguish
+// "not provided" (use default) from "provided garbage" (reject).
+function parseIntParam(raw) {
+  if (raw === undefined || raw === null || raw === '') return null;
+  const n = Number(raw);
+  if (!Number.isInteger(n)) return NaN;
+  return n;
 }
 
 router.get('/:id/openhouses', async (req, res) => {
@@ -22,8 +31,8 @@ router.get('/:id/openhouses', async (req, res) => {
     }
 
     const [propertyCheck] = await pool.query(
-      'SELECT L_ListingID FROM rets_property WHERE L_ListingID = ?',
-      [id]
+        'SELECT L_ListingID FROM rets_property WHERE L_ListingID = ?',
+        [id]
     );
 
     if (propertyCheck.length === 0) {
@@ -34,8 +43,8 @@ router.get('/:id/openhouses', async (req, res) => {
     }
 
     const [openhouses] = await pool.query(
-      'SELECT * FROM rets_openhouse WHERE L_ListingID = ? ORDER BY OpenHouseDate, OH_StartTime',
-      [id]
+        'SELECT * FROM rets_openhouse WHERE L_ListingID = ? ORDER BY OpenHouseDate, OH_StartTime',
+        [id]
     );
 
     res.json({
@@ -49,19 +58,18 @@ router.get('/:id/openhouses', async (req, res) => {
   }
 });
 
+// 2. GET Single Property Details
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-
-    // Use validation
     const validation = validateListingId(id);
     if (!validation.valid) {
       return res.status(400).json({ error: validation.error });
     }
 
     const [results] = await pool.query(
-      'SELECT * FROM rets_property WHERE L_ListingID = ?',
-      [id]
+        'SELECT * FROM rets_property WHERE L_ListingID = ?',
+        [id]
     );
 
     if (results.length === 0) {
@@ -80,45 +88,38 @@ router.get('/:id', async (req, res) => {
 
 router.get('/', async (req, res) => {
   try {
-    // do this so we can validate before setting defaults and avoid issues with NaN values
-    const limit = parseInt(req.query.limit);
-    const offset = parseInt(req.query.offset);
+    const { city, zipcode, minPrice, maxPrice, beds, baths, sortBy, sortOrder } = req.query;
 
-    // Validate limit
-    if (req.query.limit !== undefined && isNaN(limit)) {
-      return res.status(400).json({ error: 'Invalid limit parameter' });
+    // --- LIMIT / OFFSET VALIDATION ---
+    // Validate raw input BEFORE defaulting, so "?limit=abc" is rejected
+    // instead of being silently coerced to the default value.
+    const parsedLimit = parseIntParam(req.query.limit);
+    const parsedOffset = parseIntParam(req.query.offset);
+
+    if (Number.isNaN(parsedLimit)) {
+      return res.status(400).json({ error: 'limit must be a valid integer' });
+    }
+    if (Number.isNaN(parsedOffset)) {
+      return res.status(400).json({ error: 'offset must be a valid integer' });
     }
 
-    // Validate offset (optional but good practice)
-    if (req.query.offset !== undefined && isNaN(offset)) {
-      return res.status(400).json({ error: 'Invalid offset parameter' });
-    }
+    const limit = parsedLimit ?? 20;
+    const offset = parsedOffset ?? 0;
 
-    // Set defaults AFTER validation
-    const finalLimit = limit || 10;
-    const finalOffset = offset || 0;
-    const { city, zipcode, minPrice, maxPrice, beds, baths } = req.query;
-
-    // Input validation
-    if (minPrice && isNaN(minPrice)) {
-      return res.status(400).json({ error: 'minPrice must be a number' });
-    }
-    if (maxPrice && isNaN(maxPrice)) {
-      return res.status(400).json({ error: 'maxPrice must be a number' });
-    }
-    if (beds && isNaN(beds)) {
-      return res.status(400).json({ error: 'beds must be a number' });
-    }
-    if (baths && isNaN(baths)) {
-      return res.status(400).json({ error: 'baths must be a number' });
-    }
-    if (finalLimit < 1 || finalLimit > 100) {
+    if (limit < 1 || limit > 100) {
       return res.status(400).json({ error: 'limit must be between 1 and 100' });
     }
-    if (finalOffset < 0) {
+    if (offset < 0) {
       return res.status(400).json({ error: 'offset cannot be negative' });
     }
 
+    // --- FILTER VALIDATION ---
+    if (minPrice && isNaN(minPrice)) return res.status(400).json({ error: 'minPrice must be a number' });
+    if (maxPrice && isNaN(maxPrice)) return res.status(400).json({ error: 'maxPrice must be a number' });
+    if (beds && isNaN(beds)) return res.status(400).json({ error: 'beds must be a number' });
+    if (baths && isNaN(baths)) return res.status(400).json({ error: 'baths must be a number' });
+
+    // --- FILTER BUILDING ---
     const conditions = [];
     const values = [];
 
@@ -147,33 +148,35 @@ router.get('/', async (req, res) => {
       values.push(parseInt(baths));
     }
 
-    const whereClause = conditions.length > 0
-      ? 'WHERE ' + conditions.join(' AND ')
-      : '';
+    const whereClause = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';
 
+    // --- SORTING LOGIC ---
+    // Mapping clean frontend names to your specific SQL column names
+    const sortFieldMap = {
+      price: 'L_SystemPrice',
+      date: 'ListingContractDate',
+      size: 'LM_Int2_3',
+      beds: 'L_Keyword2'
+    };
+
+    let orderClause = '';
+    if (sortBy && sortFieldMap[sortBy]) {
+      const order = sortOrder?.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+      orderClause = `ORDER BY ${sortFieldMap[sortBy]} ${order}`;
+    } else {
+      // Default sort by newest listing if nothing is specified
+      orderClause = 'ORDER BY ListingContractDate DESC';
+    }
+
+    // --- EXECUTE QUERIES ---
     const countQuery = `SELECT COUNT(*) as total FROM rets_property ${whereClause}`;
     const [countResult] = await pool.query(countQuery, values);
     const total = countResult[0].total;
 
-    // Add sorting
-    let orderClause = ''; 
-    const validSortFields = ['ListPrice', 'ListingContractDate', 'LivingArea', 'BedroomsTotal']; 
-    const validOrders = ['ASC', 'DESC']; 
-    const sortBy = req.query.sortBy || 'ListingContractDate';
-    const sortOrder = req.query.sortOrder || 'ASC';
- 
-    if (sortBy && validSortFields.includes(sortBy)) { 
-      const order = validOrders.includes(sortOrder?.toUpperCase())  
-        ? sortOrder.toUpperCase()  
-        : 'ASC'; 
-      orderClause = `ORDER BY ${sortBy} ${order}`; 
-    } 
-    
     const dataQuery = `SELECT * FROM rets_property ${whereClause} ${orderClause} LIMIT ? OFFSET ?`;
+    const [results] = await pool.query(dataQuery, [...values, limit, offset]);
 
-    const [results] = await pool.query(dataQuery, [...values, finalLimit, finalOffset]);
-
-    res.json({ total, limit: finalLimit, offset: finalOffset, results });
+    res.json({ total, limit, offset, results });
   } catch (error) {
     console.error('Database error:', error);
     res.status(500).json({ error: 'Failed to fetch properties' });
