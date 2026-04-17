@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'; 
+import { useState, useEffect, useCallback } from 'react'; 
 import { useParams, useNavigate } from 'react-router-dom'; 
-import { fetchPropertyDetail, fetchOpenHouses } from '../api/client'; 
+import { fetchPropertyDetail, fetchOpenHouses } from '../api/client';
+import { safeParsePhotos } from '../utils/PhotoUtils';
 import './PropertyDetailPage.css'; 
 
 function PropertyDetailPage() { 
@@ -11,6 +12,11 @@ function PropertyDetailPage() {
   const [loading, setLoading] = useState(true); 
   const [error, setError] = useState(null); 
  
+  const formatPascalCase = useCallback((text) => {
+        if (!text) return "";
+        return text.replace(/([A-Z])/g, ' $1').trim();
+    }, []);
+
   useEffect(() => { 
     loadPropertyData(); 
   }, [id]); 
@@ -52,26 +58,9 @@ function PropertyDetailPage() {
   if (!property) { 
     return null; 
   } 
- 
-  // Handle Photos
-  /*let coverPhoto = null;
-  try {
-    if (property.L_Photos) {
-      // 1. Parse the string into a real JavaScript array
-      const photoArray = typeof property.L_Photos === 'string' 
-        ? JSON.parse(property.L_Photos) 
-        : property.L_Photos;
 
-      // 2. Grab the first item (the URL string)
-      if (Array.isArray(photoArray) && photoArray.length > 0) {
-        coverPhoto = photoArray[0];
-      }
-    }
-  } catch (e) {
-    console.error("Error parsing photos:", e);
-  }*/
-
-  const photos = property.L_Photos ? (Array.isArray(property.L_Photos) ? property.L_Photos : [property.L_Photos]) : [];
+  // Handle photos
+  const photos = safeParsePhotos(property.L_Photos);
   const coverPhoto = photos[0] || null;
 
   
@@ -127,14 +116,14 @@ function PropertyDetailPage() {
             )} 
           </div> 
  
-          <div className="property-section"> 
-            <h2>Property Details</h2> 
-            <div className="detail-grid"> 
-              {property.L_Type_ && ( 
-                <div className="detail-item"> 
-                  <span className="detail-label">Property Type:</span> 
-                  <span className="detail-value">{property.L_Type_}</span> 
-                </div> 
+          <div className="property-section">
+            <h2>Property Details</h2>
+            <div className="detail-grid">
+                {property.L_Type_ && (
+                    <div className="detail-item">
+                        <span className="detail-label">Type:</span>
+                        <span className="detail-value">{formatPascalCase(property.L_Type_)}</span>
+                    </div> 
               )} 
               {property.PropertySubType && ( 
                 <div className="detail-item"> 
