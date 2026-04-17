@@ -18,14 +18,26 @@ function ListingsPage() {
 
   useEffect(() => {
     loadProperties();
-  }, [filters, currentPage]);
+  }, [filters, currentPage, sortBy, sortOrder]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [sortBy, sortOrder]);
 
   async function loadProperties() {
     try {
       setLoading(true);
       setError(null);
       const offset = (currentPage - 1) * itemsPerPage;
-      const params = { ...filters, limit: itemsPerPage, offset };
+      const params = { 
+        ...filters, 
+        limit: itemsPerPage, 
+        offset,
+        sortBy,
+        sortOrder
+      };    
+      console.log('API PARAMS:', params); // 👈 PUT IT HERE
+  
       const data = await fetchProperties(params);
       console.log(data.results[0]); // logs the first property
       setProperties(data.results);
@@ -35,6 +47,7 @@ function ListingsPage() {
     } finally {
       setLoading(false);
     }
+    
   }
 
   const handleSearch = (newFilters) => {
