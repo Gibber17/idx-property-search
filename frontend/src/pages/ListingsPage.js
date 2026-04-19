@@ -36,7 +36,7 @@ function ListingsPage() {
         sortBy,
         sortOrder
       };    
-      
+  
       const data = await fetchProperties(params);
       console.log(data.results[0]); // logs the first property
       setProperties(data.results);
